@@ -20,5 +20,5 @@ cat /tmp/urls.txt | hgrep '[Gg]o'
 TODO
 
 * [x] support reading HTML from stdin
-* [ ] support `-r` for recursive search
 * [ ] highlight matches within lines
+* [ ] support `-r` for recursive search

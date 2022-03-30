@@ -27,35 +27,17 @@ func main() {
 	}
 
 	urls := os.Args[2:]
-	if len(urls) == 0 {
-		URLsAsStdin(os.Stdin, rx)
-	} else {
-		URLsAsArgs(urls, rx)
-	}
-}
 
-func URLsAsStdin(file *os.File, rx *regexp.Regexp) {
-	ch := make(chan Result)
-	input := bufio.NewScanner(file)
-	var nLines int
-	for input.Scan() {
-		nLines++
-		go fetchAndMatch(input.Text(), rx, ch)
-	}
-	for i := 0; i < nLines; i++ {
-		result := <-ch
-		if result.err != nil {
-			log.Printf("%v", result.err)
-			continue
+	if len(urls) == 0 { // get URLs from stdin
+		input := bufio.NewScanner(os.Stdin)
+		for input.Scan() {
+			urls = append(urls, input.Text())
 		}
-		print(result.url, result.lines)
+		if err := input.Err(); err != nil {
+			log.Fatal(err)
+		}
 	}
-	if err := input.Err(); err != nil {
-		log.Fatal(err)
-	}
-}
 
-func URLsAsArgs(urls []string, rx *regexp.Regexp) {
 	ch := make(chan Result)
 	for _, url := range urls {
 		go fetchAndMatch(url, rx, ch)
