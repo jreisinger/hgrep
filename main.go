@@ -15,7 +15,8 @@ func main() {
 	log.SetPrefix(os.Args[0] + ": ")
 
 	if len(os.Args[1:]) == 0 {
-		log.Fatal("usage: [pattern] [url ...]")
+		fmt.Fprintf(os.Stderr, "Usage: %s [pattern] [url ...]\n", os.Args[0])
+		os.Exit(1)
 	}
 
 	pattern := os.Args[1]
@@ -26,16 +27,24 @@ func main() {
 
 	urls := os.Args[2:]
 	ch := make(chan Result)
-	for _, url := range urls {
-		go search(url, rx, ch)
-	}
-	for range urls {
-		result := <-ch
-		if result.err != nil {
-			log.Printf("%v", result.err)
-			continue
+	if len(urls) == 0 {
+		lines, err := matchLines(os.Stdin, rx)
+		if err != nil {
+			log.Fatal(err)
 		}
-		print(result)
+		print("STDIN", lines)
+	} else {
+		for _, url := range urls {
+			go fetchAndMatchLines(url, rx, ch)
+		}
+		for range urls {
+			result := <-ch
+			if result.err != nil {
+				log.Printf("%v", result.err)
+				continue
+			}
+			print(result.url, result.lines)
+		}
 	}
 }
 
@@ -45,20 +54,20 @@ type Result struct {
 	err   error
 }
 
-func print(result Result) {
+func print(url string, lines []string) {
 	colorReset := "\033[0m"
 	colorBlue := "\033[34m"
 
-	for _, line := range result.lines {
+	for _, line := range lines {
 		fmt.Printf("%s", colorBlue)
-		fmt.Printf("%s: ", result.url)
+		fmt.Printf("%s: ", url)
 		fmt.Printf("%s", colorReset)
 		fmt.Printf("%s\n", line)
 	}
 
 }
 
-func search(url string, rx *regexp.Regexp, ch chan Result) {
+func fetchAndMatchLines(url string, rx *regexp.Regexp, ch chan Result) {
 	result := Result{url: url}
 
 	resp, err := http.Get(url)
@@ -69,11 +78,20 @@ func search(url string, rx *regexp.Regexp, ch chan Result) {
 	}
 	defer resp.Body.Close()
 
-	b, err := io.ReadAll(resp.Body)
+	result.lines, err = matchLines(resp.Body, rx)
 	if err != nil {
 		result.err = err
 		ch <- result
 		return
+	}
+
+	ch <- result
+}
+
+func matchLines(input io.ReadCloser, rx *regexp.Regexp) ([]string, error) {
+	b, err := io.ReadAll(input)
+	if err != nil {
+		return nil, err
 	}
 
 	var lines []string
@@ -82,6 +100,5 @@ func search(url string, rx *regexp.Regexp, ch chan Result) {
 			lines = append(lines, line)
 		}
 	}
-	result.lines = lines
-	ch <- result
+	return lines, nil
 }
