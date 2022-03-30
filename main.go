@@ -28,14 +28,14 @@ func main() {
 	urls := os.Args[2:]
 	ch := make(chan Result)
 	if len(urls) == 0 {
-		lines, err := matchLines(os.Stdin, rx)
+		lines, err := match(os.Stdin, rx)
 		if err != nil {
 			log.Fatal(err)
 		}
 		print("STDIN", lines)
 	} else {
 		for _, url := range urls {
-			go fetchAndMatchLines(url, rx, ch)
+			go fetchAndMatch(url, rx, ch)
 		}
 		for range urls {
 			result := <-ch
@@ -67,7 +67,7 @@ func print(url string, lines []string) {
 
 }
 
-func fetchAndMatchLines(url string, rx *regexp.Regexp, ch chan Result) {
+func fetchAndMatch(url string, rx *regexp.Regexp, ch chan Result) {
 	result := Result{url: url}
 
 	resp, err := http.Get(url)
@@ -78,7 +78,7 @@ func fetchAndMatchLines(url string, rx *regexp.Regexp, ch chan Result) {
 	}
 	defer resp.Body.Close()
 
-	result.lines, err = matchLines(resp.Body, rx)
+	result.lines, err = match(resp.Body, rx)
 	if err != nil {
 		result.err = err
 		ch <- result
@@ -88,13 +88,12 @@ func fetchAndMatchLines(url string, rx *regexp.Regexp, ch chan Result) {
 	ch <- result
 }
 
-func matchLines(input io.ReadCloser, rx *regexp.Regexp) ([]string, error) {
+func match(input io.ReadCloser, rx *regexp.Regexp) (lines []string, err error) {
 	b, err := io.ReadAll(input)
 	if err != nil {
 		return nil, err
 	}
 
-	var lines []string
 	for _, line := range strings.Split(string(b), "\n") {
 		if rx.MatchString(line) {
 			lines = append(lines, line)
