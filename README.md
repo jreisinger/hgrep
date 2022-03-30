@@ -9,8 +9,12 @@ go install
 USAGE
 
 ```
-hgrep 'Go' https://reisinge.net/about https://reisinge.net/cv
-echo -e "https://reisinge.net/about\nhttps://reisinge.net/cv" | hgrep 'Go'
+hgrep '[Gg]o' https://reisinge.net/about https://reisinge.net/cv
+
+echo -e "https://reisinge.net/about\nhttps://reisinge.net/cv" | hgrep '[Gg]o'
+
+echo -e "https://reisinge.net/about\nhttps://reisinge.net/cv" > /tmp/urls.txt
+cat /tmp/urls.txt | hgrep '[Gg]o'
 ```
 
 TODO
