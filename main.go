@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"log"
@@ -27,12 +28,25 @@ func main() {
 
 	urls := os.Args[2:]
 	ch := make(chan Result)
+
 	if len(urls) == 0 {
-		lines, err := match(os.Stdin, rx)
-		if err != nil {
+		input := bufio.NewScanner(os.Stdin)
+		var nLines int
+		for input.Scan() {
+			nLines++
+			go fetchAndMatch(input.Text(), rx, ch)
+		}
+		for i := 0; i < nLines; i++ {
+			result := <-ch
+			if result.err != nil {
+				log.Printf("%v", result.err)
+				continue
+			}
+			print(result.url, result.lines)
+		}
+		if err := input.Err(); err != nil {
 			log.Fatal(err)
 		}
-		print("STDIN", lines)
 	} else {
 		for _, url := range urls {
 			go fetchAndMatch(url, rx, ch)
