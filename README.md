@@ -3,7 +3,7 @@
 INSTALLATION
 
 ```
-go install
+make install
 ```
 
 USAGE
