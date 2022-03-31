@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -15,22 +16,29 @@ const colorReset = "\033[0m"
 const colorBlue = "\033[34m"
 const colorRed = "\033[31m"
 
+var i = flag.Bool("i", false, "perform case insensitive matching")
+
 func main() {
+	flag.Parse()
+
 	log.SetFlags(0)
 	log.SetPrefix(os.Args[0] + ": ")
 
-	if len(os.Args[1:]) == 0 {
+	if len(flag.Args()) == 0 {
 		fmt.Fprintf(os.Stderr, "Usage: %s [pattern] [url ...]\n", os.Args[0])
 		os.Exit(1)
 	}
 
-	pattern := os.Args[1]
+	pattern := flag.Args()[0]
+	if *i {
+		pattern = `(?i)` + pattern
+	}
 	rx, err := regexp.Compile(pattern)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	urls := os.Args[2:]
+	urls := flag.Args()[1:]
 
 	if len(urls) == 0 { // get URLs from stdin
 		input := bufio.NewScanner(os.Stdin)

@@ -21,5 +21,5 @@ TODO
 
 * [x] support reading HTML from stdin
 * [x] highlight matches within lines
+* [x] support `-i` for case insensitive matching
 * [ ] support `-r` for recursive links search
-* [ ] support `-i` for case insensitive matching
