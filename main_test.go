@@ -9,6 +9,23 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestAddScheme(t *testing.T) {
+	testcases := []struct {
+		in  string
+		out string
+	}{
+		{"", ""},
+		{"x", "https://x"},
+		{"example.com", "https://example.com"},
+		{"http://example.com", "http://example.com"},
+		{"https://example.com", "https://example.com"},
+	}
+	for _, tc := range testcases {
+		got := addScheme(tc.in)
+		assert.Equal(t, tc.out, got)
+	}
+}
+
 func TestMatch(t *testing.T) {
 	testcases := []struct {
 		input   io.Reader

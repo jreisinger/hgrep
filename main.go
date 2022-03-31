@@ -52,9 +52,7 @@ func main() {
 
 	ch := make(chan Result)
 	for _, url := range urls {
-		if !strings.HasPrefix(url, "http") {
-			url = "https://" + url
-		}
+		url := addScheme(url)
 		go fetchAndMatch(url, rx, ch)
 	}
 	for range urls {
@@ -71,6 +69,13 @@ type Result struct {
 	url   string
 	lines []string
 	err   error
+}
+
+func addScheme(url string) string {
+	if url != "" && !strings.HasPrefix(url, "http") {
+		url = "https://" + url
+	}
+	return url
 }
 
 func print(url string, lines []string) {
