@@ -92,7 +92,7 @@ func fetchAndMatch(url string, rx *regexp.Regexp, ch chan Result) {
 	ch <- result
 }
 
-func match(input io.ReadCloser, rx *regexp.Regexp) (lines []string, err error) {
+func match(input io.Reader, rx *regexp.Regexp) (lines []string, err error) {
 	b, err := io.ReadAll(input)
 	if err != nil {
 		return nil, err
