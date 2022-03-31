@@ -52,6 +52,9 @@ func main() {
 
 	ch := make(chan Result)
 	for _, url := range urls {
+		if !strings.HasPrefix(url, "http") {
+			url = "https://" + url
+		}
 		go fetchAndMatch(url, rx, ch)
 	}
 	for range urls {
