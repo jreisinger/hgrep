@@ -11,6 +11,10 @@ import (
 	"strings"
 )
 
+const colorReset = "\033[0m"
+const colorBlue = "\033[34m"
+const colorRed = "\033[31m"
+
 func main() {
 	log.SetFlags(0)
 	log.SetPrefix(os.Args[0] + ": ")
@@ -59,9 +63,6 @@ type Result struct {
 }
 
 func print(url string, lines []string) {
-	colorReset := "\033[0m"
-	colorBlue := "\033[34m"
-
 	for _, line := range lines {
 		fmt.Printf("%s", colorBlue)
 		fmt.Printf("%s: ", url)
@@ -99,9 +100,22 @@ func match(input io.Reader, rx *regexp.Regexp) (lines []string, err error) {
 	}
 
 	for _, line := range strings.Split(string(b), "\n") {
-		if rx.MatchString(line) {
-			lines = append(lines, line)
+		matches := rx.FindAllStringIndex(line, -1)
+		if matches == nil {
+			continue
 		}
+		var highlight string
+		var s int
+		for _, m := range matches {
+			highlight += fmt.Sprintf("%s", line[s:m[0]])
+			highlight += fmt.Sprintf("%s", colorRed)
+			highlight += fmt.Sprintf("%s", line[m[0]:m[1]])
+			highlight += fmt.Sprintf("%s", colorReset)
+			s = m[1]
+		}
+		highlight += fmt.Sprintf("%s", line[s:])
+		lines = append(lines, highlight)
 	}
+
 	return lines, nil
 }
