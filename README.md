@@ -9,12 +9,8 @@ make install
 USAGE
 
 ```
-hgrep '[Gg]o' https://reisinge.net/about https://reisinge.net/cv
-
-echo -e "https://reisinge.net/about\nhttps://reisinge.net/cv" | hgrep '[Gg]o'
-
-echo -e "https://reisinge.net/about\nhttps://reisinge.net/cv" > /tmp/urls.txt
-cat /tmp/urls.txt | hgrep '[Gg]o'
+hgrep '[Gg][Oo]' reisinge.net/about reisinge.net/cv
+echo -e "reisinge.net/about\nreisinge.net/cv" | hgrep -i 'go'
 ```
 
 TODO
