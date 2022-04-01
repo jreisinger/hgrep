@@ -16,6 +16,9 @@ const colorReset = "\033[0m"
 const colorBlue = "\033[34m"
 const colorRed = "\033[31m"
 
+var i = flag.Bool("i", false, "perform case insensitive matching")
+var m = flag.Bool("m", false, "print only matched parts")
+
 func main() {
 	log.SetFlags(0)
 	log.SetPrefix(os.Args[0] + ": ")
@@ -41,8 +44,6 @@ func main() {
 }
 
 func parseCLIargs() (rx *regexp.Regexp, urls []string, err error) {
-	i := flag.Bool("i", false, "perform case insensitive matching")
-
 	flag.Parse()
 	args := flag.Args()
 
@@ -126,21 +127,30 @@ func match(input io.Reader, rx *regexp.Regexp) (lines []string, err error) {
 	}
 
 	for _, line := range strings.Split(string(b), "\n") {
-		matches := rx.FindAllStringIndex(line, -1)
-		if matches == nil {
-			continue
+		if *m {
+			matches := rx.FindAllStringSubmatch(line, -1)
+			if len(matches) != 0 {
+				for _, m := range matches {
+					lines = append(lines, m...)
+				}
+			}
+		} else {
+			matches := rx.FindAllStringIndex(line, -1)
+			if matches == nil {
+				continue
+			}
+			var highlight string
+			var s int
+			for _, m := range matches {
+				highlight += fmt.Sprintf("%s", line[s:m[0]])
+				highlight += fmt.Sprintf("%s", colorRed)
+				highlight += fmt.Sprintf("%s", line[m[0]:m[1]])
+				highlight += fmt.Sprintf("%s", colorReset)
+				s = m[1]
+			}
+			highlight += fmt.Sprintf("%s", line[s:])
+			lines = append(lines, highlight)
 		}
-		var highlight string
-		var s int
-		for _, m := range matches {
-			highlight += fmt.Sprintf("%s", line[s:m[0]])
-			highlight += fmt.Sprintf("%s", colorRed)
-			highlight += fmt.Sprintf("%s", line[m[0]:m[1]])
-			highlight += fmt.Sprintf("%s", colorReset)
-			s = m[1]
-		}
-		highlight += fmt.Sprintf("%s", line[s:])
-		lines = append(lines, highlight)
 	}
 
 	return lines, nil
