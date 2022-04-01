@@ -81,8 +81,9 @@ func addScheme(url string) string {
 func print(url string, lines []string) {
 	for _, line := range lines {
 		fmt.Printf("%s", colorBlue)
-		fmt.Printf("%s: ", url)
+		fmt.Printf("%s", url)
 		fmt.Printf("%s", colorReset)
+		fmt.Printf("%s", ":")
 		fmt.Printf("%s\n", line)
 	}
 
