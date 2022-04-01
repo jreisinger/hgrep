@@ -9,8 +9,7 @@ make install
 USAGE
 
 ```
-hgrep '[Gg][Oo]' reisinge.net/about reisinge.net/cv
-echo -e "reisinge.net/about\nreisinge.net/cv" | hgrep -i 'go'
+hgrep '👉|Go' reisinge.net/notes/go/pointers reisinge.net/cv
 ```
 
 TODO
