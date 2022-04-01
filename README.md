@@ -10,6 +10,7 @@ USAGE
 
 ```
 hgrep '👉|Go' reisinge.net/notes/go/pointers reisinge.net/cv
+hgrep -m '\w+\[\.\][a-z]{1,3}' blog.google/threat-analysis-group/exposing-initial-access-broker-ties-conti/
 ```
 
 TODO
