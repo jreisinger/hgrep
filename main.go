@@ -19,17 +19,10 @@ const colorRed = "\033[31m"
 var i = flag.Bool("i", false, "perform case insensitive matching")
 
 func main() {
-	flag.Parse()
-
 	log.SetFlags(0)
 	log.SetPrefix(os.Args[0] + ": ")
 
-	if len(flag.Args()) == 0 {
-		fmt.Fprintf(os.Stderr, "Usage: %s [pattern] [url ...]\n", os.Args[0])
-		os.Exit(1)
-	}
-
-	rx, urls, err := parseCLIargs(flag.Args())
+	rx, urls, err := parseCLIargs()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,12 +42,20 @@ func main() {
 	}
 }
 
-func parseCLIargs(args []string) (rx *regexp.Regexp, urls []string, err error) {
-	argPattern := args[0]
-	if *i {
-		argPattern = `(?i)` + argPattern
+func parseCLIargs() (rx *regexp.Regexp, urls []string, err error) {
+	flag.Parse()
+	args := flag.Args()
+
+	if len(args) == 0 {
+		e := fmt.Errorf("usage: hgrep [flags] [pattern] [url ...]")
+		return nil, nil, e
 	}
-	rx, err = regexp.Compile(argPattern)
+
+	pattern := args[0]
+	if *i {
+		pattern = `(?i)` + pattern
+	}
+	rx, err = regexp.Compile(pattern)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -73,12 +74,6 @@ func parseCLIargs(args []string) (rx *regexp.Regexp, urls []string, err error) {
 	return rx, urls, err
 }
 
-type Result struct {
-	url   string
-	lines []string
-	err   error
-}
-
 func addScheme(url string) string {
 	if url != "" && !strings.HasPrefix(url, "http") {
 		url = "https://" + url
@@ -95,6 +90,12 @@ func print(url string, lines []string) {
 		fmt.Printf("%s\n", line)
 	}
 
+}
+
+type Result struct {
+	url   string
+	lines []string
+	err   error
 }
 
 func fetchAndMatch(url string, rx *regexp.Regexp, ch chan Result) {
