@@ -16,8 +16,6 @@ const colorReset = "\033[0m"
 const colorBlue = "\033[34m"
 const colorRed = "\033[31m"
 
-var i = flag.Bool("i", false, "perform case insensitive matching")
-
 func main() {
 	log.SetFlags(0)
 	log.SetPrefix(os.Args[0] + ": ")
@@ -43,6 +41,8 @@ func main() {
 }
 
 func parseCLIargs() (rx *regexp.Regexp, urls []string, err error) {
+	i := flag.Bool("i", false, "perform case insensitive matching")
+
 	flag.Parse()
 	args := flag.Args()
 
