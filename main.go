@@ -29,25 +29,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	pattern := flag.Args()[0]
-	if *i {
-		pattern = `(?i)` + pattern
-	}
-	rx, err := regexp.Compile(pattern)
+	rx, urls, err := parseCLIargs(flag.Args())
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	urls := flag.Args()[1:]
-
-	if len(urls) == 0 { // get URLs from stdin
-		input := bufio.NewScanner(os.Stdin)
-		for input.Scan() {
-			urls = append(urls, input.Text())
-		}
-		if err := input.Err(); err != nil {
-			log.Fatal(err)
-		}
 	}
 
 	ch := make(chan Result)
@@ -63,6 +47,30 @@ func main() {
 		}
 		print(result.url, result.lines)
 	}
+}
+
+func parseCLIargs(args []string) (rx *regexp.Regexp, urls []string, err error) {
+	argPattern := args[0]
+	if *i {
+		argPattern = `(?i)` + argPattern
+	}
+	rx, err = regexp.Compile(argPattern)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	urls = args[1:]
+	if len(urls) == 0 { // get URLs from stdin
+		input := bufio.NewScanner(os.Stdin)
+		for input.Scan() {
+			urls = append(urls, input.Text())
+		}
+		if err := input.Err(); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return rx, urls, err
 }
 
 type Result struct {
