@@ -20,5 +20,5 @@ TODO
 * [x] support `-i` for case insensitive matching
 * [x] support `-H` to always print URL headers
 * [x] support `-h` to never print URL headers
-* [x] supprot `-m` to print only matched parts
+* [x] support `-m` to print only matched parts
 * [ ] support `-r` for recursive links search
