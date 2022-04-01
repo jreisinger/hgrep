@@ -18,6 +18,8 @@ const colorRed = "\033[31m"
 
 var i = flag.Bool("i", false, "perform case insensitive matching")
 var m = flag.Bool("m", false, "print only matched parts")
+var H = flag.Bool("H", false, "always print URL headers")
+var h = flag.Bool("h", false, "never print URL headers")
 
 func main() {
 	log.SetFlags(0)
@@ -39,7 +41,16 @@ func main() {
 			log.Printf("%v", result.err)
 			continue
 		}
-		print(result.url, result.lines)
+		var headers bool
+		switch {
+		case *H && *h:
+			log.Fatal("using both -h and -H makes no sense")
+		case len(urls) == 0 || *h:
+			headers = false
+		case len(urls) > 1 || *H:
+			headers = true
+		}
+		print(result.url, result.lines, headers)
 	}
 }
 
@@ -82,12 +93,14 @@ func addScheme(url string) string {
 	return url
 }
 
-func print(url string, lines []string) {
+func print(url string, lines []string, headers bool) {
 	for _, line := range lines {
-		fmt.Printf("%s", colorBlue)
-		fmt.Printf("%s", url)
-		fmt.Printf("%s", colorReset)
-		fmt.Printf("%s", ":")
+		if headers {
+			fmt.Printf("%s", colorBlue)
+			fmt.Printf("%s", url)
+			fmt.Printf("%s", colorReset)
+			fmt.Printf("%s", ":")
+		}
 		fmt.Printf("%s\n", line)
 	}
 
