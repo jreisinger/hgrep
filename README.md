@@ -15,7 +15,7 @@ hgrep -m '\w+\[\.\][a-z]{1,3}' https://blog.google/threat-analysis-group/exposin
 
 TODO
 
-* [x] support reading HTML from stdin
+* [x] support reading URLs from stdin
 * [x] highlight matches within lines
 * [x] support `-i` to perform case insensitive matching
 * [x] support `-m` to print only matched parts
