@@ -7,9 +7,12 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
+
+	"golang.org/x/net/html"
 )
 
 const colorReset = "\033[0m"
@@ -18,40 +21,127 @@ const colorRed = "\033[31m"
 
 var i = flag.Bool("i", false, "perform case insensitive matching")
 var m = flag.Bool("m", false, "print only matched parts")
-var H = flag.Bool("H", false, "always print URL headers")
-var h = flag.Bool("h", false, "never print URL headers")
+var r = flag.Bool("r", false, "search links recursively within the host")
 
-func main() {
+// tokens is a counting semaphore used to
+// enforce a limit of 20 concurrent requests.
+var tokens = make(chan struct{}, 20) // struct{} has size zero
+
+func init() {
 	log.SetFlags(0)
 	log.SetPrefix(os.Args[0] + ": ")
+}
 
+func main() {
 	rx, urls, err := parseCLIargs()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	ch := make(chan Result)
-	for _, url := range urls {
-		url := addScheme(url)
-		go fetchAndMatch(url, rx, ch)
+	var headers bool
+	if len(urls) > 1 || *r {
+		headers = true
 	}
-	for range urls {
-		result := <-ch
-		if result.err != nil {
-			log.Printf("%v", result.err)
-			continue
+
+	worklist := make(chan []string)
+	var n int // number of pending sends to worklist
+
+	// Start with the command-line arguments.
+	n++
+	go func() { worklist <- urls }()
+
+	// Crawl the web concurrently.
+	seen := make(map[string]bool)
+	for ; n > 0; n-- {
+		list := <-worklist
+		for _, link := range list {
+			if !seen[link] {
+				seen[link] = true
+				n++
+				go func(link string) {
+					worklist <- crawl(link, rx, *r, headers)
+				}(link)
+			}
 		}
-		var headers bool
-		switch {
-		case *H && *h:
-			log.Fatal("using both -h and -H makes no sense")
-		case len(urls) == 0 || *h:
-			headers = false
-		case len(urls) > 1 || *H:
-			headers = true
-		}
-		print(result.url, result.lines, headers)
 	}
+}
+
+// linksExtract makes an HTTP GET request to the specified URL, parses the
+// response as HTML, and returns the links in the HTML document. It ignores bad
+// URLs and URLs on different host.
+func linksExtract(url string) ([]string, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return nil, fmt.Errorf("getting %s: %s", url, resp.Status)
+	}
+
+	doc, err := html.Parse(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		return nil, fmt.Errorf("parsing %s as HTML: %v", url, err)
+	}
+
+	var links []string
+	visitNode := func(n *html.Node) {
+		if n.Type == html.ElementNode && n.Data == "a" {
+			for _, a := range n.Attr {
+				if a.Key != "href" {
+					continue
+				}
+				link, err := resp.Request.URL.Parse(a.Val)
+				if err != nil || !sameHost(url, link) {
+					// Ignore bad URLs and
+					// URLs on other hosts.
+					continue
+				}
+				links = append(links, link.String())
+			}
+		}
+	}
+	forEachNode(doc, visitNode, nil)
+	return links, nil
+}
+
+func sameHost(URL string, link *url.URL) bool {
+	u, err := url.Parse(URL)
+	if err != nil {
+		return false
+	}
+	return u.Host == link.Host
+}
+
+func forEachNode(n *html.Node, pre, post func(n *html.Node)) {
+	if pre != nil {
+		pre(n)
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		forEachNode(c, pre, post)
+	}
+	if post != nil {
+		post(n)
+	}
+}
+
+func crawl(url string, rx *regexp.Regexp, recurse, printHeaders bool) []string {
+	// fmt.Println(url)
+	result := fetchAndMatch(url, rx)
+	print(result.url, result.lines, printHeaders)
+
+	if recurse {
+		tokens <- struct{}{} // acquire a token
+		list, err := linksExtract(url)
+		<-tokens // release the token
+		if err != nil {
+			log.Print(err)
+		}
+		return list
+	}
+
+	return nil
 }
 
 func parseCLIargs() (rx *regexp.Regexp, urls []string, err error) {
@@ -112,25 +202,23 @@ type Result struct {
 	err   error
 }
 
-func fetchAndMatch(url string, rx *regexp.Regexp, ch chan Result) {
+func fetchAndMatch(url string, rx *regexp.Regexp) Result {
 	result := Result{url: url}
 
 	resp, err := http.Get(url)
 	if err != nil {
 		result.err = err
-		ch <- result
-		return
+		return result
 	}
 	defer resp.Body.Close()
 
 	result.lines, err = match(resp.Body, rx)
 	if err != nil {
 		result.err = err
-		ch <- result
-		return
+		return result
 	}
 
-	ch <- result
+	return result
 }
 
 func match(input io.Reader, rx *regexp.Regexp) (lines []string, err error) {
