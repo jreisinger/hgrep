@@ -9,7 +9,7 @@ make install
 USAGE
 
 ```
-hgrep -r '👉|Go' https://reisinge.net
+hgrep -r DevOps https://go.dev
 hgrep -m '\w+\[\.\][a-z]{1,3}' https://blog.google/threat-analysis-group/exposing-initial-access-broker-ties-conti
 ```
 
