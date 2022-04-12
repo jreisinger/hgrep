@@ -9,8 +9,12 @@ make install
 USAGE
 
 ```
-hgrep -r DevOps https://go.dev
-hgrep -m '\w+\[\.\][a-z]{1,3}' https://blog.google/threat-analysis-group/exposing-initial-access-broker-ties-conti
+hgrep DevOps https://go.dev
+
+hgrep -m '\w+\[\.\][a-z]{1,3}' \
+https://blog.google/threat-analysis-group/exposing-initial-access-broker-ties-conti
+
+hgrep -r -c 5 DevOps https://go.dev
 ```
 
 TODO

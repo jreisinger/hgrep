@@ -22,10 +22,7 @@ const colorRed = "\033[31m"
 var i = flag.Bool("i", false, "perform case insensitive matching")
 var m = flag.Bool("m", false, "print only matched parts")
 var r = flag.Bool("r", false, "search links recursively within the host")
-
-// tokens is a counting semaphore used to
-// enforce a limit of 20 concurrent requests.
-var tokens = make(chan struct{}, 20) // struct{} has size zero
+var c = flag.Int("c", 10, "number of concurrent requests")
 
 func init() {
 	log.SetFlags(0)
@@ -50,20 +47,43 @@ func main() {
 	n++
 	go func() { worklist <- urls }()
 
+	// tokens is a counting semaphore used to
+	// enforce a limit on concurrent requests.
+	var tokens = make(chan struct{}, *c) // struct{} has size zero
+
 	// Crawl the web concurrently.
 	seen := make(map[string]bool)
 	for ; n > 0; n-- {
-		list := <-worklist
-		for _, link := range list {
-			if !seen[link] {
-				seen[link] = true
+		for _, url := range <-worklist {
+			if !seen[url] {
+				seen[url] = true
 				n++
 				go func(link string) {
-					worklist <- crawl(link, rx, *r, headers)
-				}(link)
+					tokens <- struct{}{} // acquire a token
+					worklist <- searchAndPrint(link, rx, *r, headers)
+					<-tokens // release the token
+				}(url)
 			}
 		}
 	}
+}
+
+// searchAndPrint searches url for pattern and prints it. If recurse is true it
+// searches for links within the URL and returns them. Headers enables printing
+// of URLs at which pattern was found.
+func searchAndPrint(url string, pattern *regexp.Regexp, recurse, headers bool) []string {
+	result := fetchAndSearch(url, pattern)
+	result.print(headers)
+
+	if recurse {
+		list, err := linksExtract(url)
+		if err != nil {
+			log.Print(err)
+		}
+		return list
+	}
+
+	return nil
 }
 
 // linksExtract makes an HTTP GET request to the specified URL, parses the
@@ -126,24 +146,6 @@ func forEachNode(n *html.Node, pre, post func(n *html.Node)) {
 	}
 }
 
-func crawl(url string, rx *regexp.Regexp, recurse, printHeaders bool) []string {
-	// fmt.Println(url)
-	result := fetchAndMatch(url, rx)
-	print(result.url, result.lines, printHeaders)
-
-	if recurse {
-		tokens <- struct{}{} // acquire a token
-		list, err := linksExtract(url)
-		<-tokens // release the token
-		if err != nil {
-			log.Print(err)
-		}
-		return list
-	}
-
-	return nil
-}
-
 func parseCLIargs() (rx *regexp.Regexp, urls []string, err error) {
 	flag.Parse()
 	args := flag.Args()
@@ -183,26 +185,13 @@ func addScheme(url string) string {
 	return url
 }
 
-func print(url string, lines []string, headers bool) {
-	for _, line := range lines {
-		if headers {
-			fmt.Printf("%s", colorBlue)
-			fmt.Printf("%s", url)
-			fmt.Printf("%s", colorReset)
-			fmt.Printf("%s", ":")
-		}
-		fmt.Printf("%s\n", line)
-	}
-
-}
-
 type Result struct {
 	url   string
 	lines []string
 	err   error
 }
 
-func fetchAndMatch(url string, rx *regexp.Regexp) Result {
+func fetchAndSearch(url string, rx *regexp.Regexp) Result {
 	result := Result{url: url}
 
 	resp, err := http.Get(url)
@@ -219,6 +208,19 @@ func fetchAndMatch(url string, rx *regexp.Regexp) Result {
 	}
 
 	return result
+}
+
+func (r Result) print(headers bool) {
+	for _, line := range r.lines {
+		if headers {
+			fmt.Printf("%s", colorBlue)
+			fmt.Printf("%s", r.url)
+			fmt.Printf("%s", colorReset)
+			fmt.Printf("%s", ":")
+		}
+		fmt.Printf("%s\n", line)
+	}
+
 }
 
 func match(input io.Reader, rx *regexp.Regexp) (lines []string, err error) {
