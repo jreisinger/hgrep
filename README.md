@@ -24,3 +24,4 @@ TODO
 * [x] support `-i` to perform case insensitive matching
 * [x] support `-m` to print only matched parts
 * [x] support `-r` to search links recursively within the host
+* [x] support `-c` to limit the number of concurrent searches
