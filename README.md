@@ -1,4 +1,4 @@
-`hgrep` (HTTP grep) fetches URLs and prints lines matching pattern.
+`hgrep` (HTTP grep) searches URLs for patterns.
 
 INSTALLATION
 

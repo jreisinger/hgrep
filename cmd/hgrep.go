@@ -1,3 +1,4 @@
+// hgrep is a command-line tool to search URLs for patterns
 package main
 
 import (
@@ -7,15 +8,13 @@ import (
 	"log"
 	"os"
 	"regexp"
-)
 
-const colorReset = "\033[0m"
-const colorBlue = "\033[34m"
-const colorRed = "\033[31m"
+	"github.com/jreisinger/hgrep"
+)
 
 var i = flag.Bool("i", false, "perform case insensitive matching")
 var m = flag.Bool("m", false, "print only matched parts")
-var r = flag.Bool("r", false, "search links recursively within the host")
+var r = flag.Bool("r", false, "search links within host recursively")
 var c = flag.Int("c", 5, "number of concurrent searches")
 
 func init() {
@@ -29,9 +28,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var headers bool
+	var header bool
 	if len(urls) > 1 || *r {
-		headers = true
+		header = true
 	}
 
 	worklist := make(chan []string)
@@ -54,7 +53,7 @@ func main() {
 				n++
 				go func(link string) {
 					tokens <- struct{}{} // acquire a token
-					worklist <- searchAndPrint(link, rx, *r, headers)
+					worklist <- hgrep.Search(link, rx, *r, header, *m)
 					<-tokens // release the token
 				}(url)
 			}

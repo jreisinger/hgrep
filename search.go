@@ -1,4 +1,4 @@
-package main
+package hgrep
 
 import (
 	"fmt"
@@ -11,12 +11,17 @@ import (
 	"github.com/jreisinger/hgrep/links"
 )
 
-// searchAndPrint searches url for pattern and prints it. If recurse is true it
-// searches for links within the URL and returns them. Headers enables printing
-// of URLs at which pattern was found.
-func searchAndPrint(url string, pattern *regexp.Regexp, recurse, headers bool) []string {
-	result := fetchAndSearch(url, pattern)
-	result.print(headers)
+const colorReset = "\033[0m"
+const colorBlue = "\033[34m"
+const colorRed = "\033[31m"
+
+// Search searches url for pattern and if found prints the line that matched.
+// If recurse is true it also extracts links from the URL and returns them.
+// Header enables printing of URLs at which pattern was found. MatchesOnly
+// prints only matched parts not whole lines.
+func Search(url string, pattern *regexp.Regexp, recurse, header, matchesOnly bool) []string {
+	result := fetchAndSearch(url, pattern, matchesOnly)
+	result.print(header)
 
 	if recurse {
 		list, err := links.Extract(url, true)
@@ -29,17 +34,17 @@ func searchAndPrint(url string, pattern *regexp.Regexp, recurse, headers bool) [
 	return nil
 }
 
-// Results contains the URL that was searched, any lines that matched the
+// result contains the URL that was searched, any lines that matched the
 // pattern and possible error.
-type Result struct {
+type result struct {
 	url   string
 	lines []string
 	err   error
 }
 
 // fetchAndSearch fetches the url and searches rx in it.
-func fetchAndSearch(url string, rx *regexp.Regexp) Result {
-	result := Result{url: url}
+func fetchAndSearch(url string, rx *regexp.Regexp, matchesOnly bool) result {
+	result := result{url: url}
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -48,7 +53,7 @@ func fetchAndSearch(url string, rx *regexp.Regexp) Result {
 	}
 	defer resp.Body.Close()
 
-	result.lines, err = match(resp.Body, rx)
+	result.lines, err = match(resp.Body, rx, matchesOnly)
 	if err != nil {
 		result.err = err
 		return result
@@ -58,7 +63,7 @@ func fetchAndSearch(url string, rx *regexp.Regexp) Result {
 }
 
 // print prints the Result in colors.
-func (r Result) print(headers bool) {
+func (r result) print(headers bool) {
 	for _, line := range r.lines {
 		if headers {
 			fmt.Printf("%s", colorBlue)
@@ -71,23 +76,24 @@ func (r Result) print(headers bool) {
 
 }
 
-// match searches for rx matches in input.
-func match(input io.Reader, rx *regexp.Regexp) (lines []string, err error) {
+// match searches input for pattern matches. It returns lines witch highlighted
+// matches or matches only.
+func match(input io.Reader, pattern *regexp.Regexp, matchesOnly bool) (lines []string, err error) {
 	b, err := io.ReadAll(input)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, line := range strings.Split(string(b), "\n") {
-		if *m {
-			matches := rx.FindAllStringSubmatch(line, -1)
+		if matchesOnly {
+			matches := pattern.FindAllStringSubmatch(line, -1)
 			if len(matches) != 0 {
 				for _, m := range matches {
 					lines = append(lines, m...)
 				}
 			}
 		} else {
-			matches := rx.FindAllStringIndex(line, -1)
+			matches := pattern.FindAllStringIndex(line, -1)
 			if matches == nil {
 				continue
 			}

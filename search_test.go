@@ -1,4 +1,4 @@
-package main
+package hgrep
 
 import (
 	"io"
@@ -71,7 +71,7 @@ func TestMatch(t *testing.T) {
 		},
 	}
 	for _, tc := range testcases {
-		lines, err := match(tc.input, tc.rx)
+		lines, err := match(tc.input, tc.rx, false)
 		assert.NoError(t, err)
 		assert.Equal(t, tc.matches, lines)
 	}

@@ -8,9 +8,8 @@ import (
 	"golang.org/x/net/html"
 )
 
-// Extract makes an HTTP GET request to the specified URL, parses the response
-// as HTML and returns the links in the HTML document. It ignores bad URLs and
-// URLs on different host.
+// Extract returns the links from the HTML document at url. SameHostOnly returns
+// only links on the same host as the one in url.
 func Extract(url string, sameHostOnly bool) ([]string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
