@@ -35,7 +35,7 @@ func linksExtract(url string) ([]string, error) {
 					continue
 				}
 				link, err := resp.Request.URL.Parse(a.Val)
-				if err != nil || !sameHost(url, link) {
+				if err != nil || !sameHost(url, link.String()) {
 					// Ignore bad URLs and
 					// URLs on other hosts.
 					continue
@@ -48,12 +48,16 @@ func linksExtract(url string) ([]string, error) {
 	return links, nil
 }
 
-func sameHost(URL string, link *url.URL) bool {
-	u, err := url.Parse(URL)
+func sameHost(url1, url2 string) bool {
+	u1, err := url.Parse(url1)
 	if err != nil {
 		return false
 	}
-	return u.Host == link.Host
+	u2, err := url.Parse(url2)
+	if err != nil {
+		return false
+	}
+	return u1.Host == u2.Host
 }
 
 func forEachNode(n *html.Node, pre, post func(n *html.Node)) {
