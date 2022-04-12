@@ -9,7 +9,7 @@ make install
 USAGE
 
 ```
-hgrep DevOps https://go.dev
+hgrep DevOps https://go.dev https://golang.org
 
 hgrep -r DevOps https://go.dev
 

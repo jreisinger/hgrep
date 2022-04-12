@@ -178,13 +178,6 @@ func parseCLIargs() (rx *regexp.Regexp, urls []string, err error) {
 	return rx, urls, err
 }
 
-func addScheme(url string) string {
-	if url != "" && !strings.HasPrefix(url, "http") {
-		url = "https://" + url
-	}
-	return url
-}
-
 type Result struct {
 	url   string
 	lines []string
