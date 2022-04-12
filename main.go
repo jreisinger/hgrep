@@ -22,7 +22,7 @@ const colorRed = "\033[31m"
 var i = flag.Bool("i", false, "perform case insensitive matching")
 var m = flag.Bool("m", false, "print only matched parts")
 var r = flag.Bool("r", false, "search links recursively within the host")
-var c = flag.Int("c", 10, "number of concurrent requests")
+var c = flag.Int("c", 5, "number of concurrent searches")
 
 func init() {
 	log.SetFlags(0)
