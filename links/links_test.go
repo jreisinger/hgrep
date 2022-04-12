@@ -1,6 +1,9 @@
-package main
+package links
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestSameHost(t *testing.T) {
 	testcases := []struct {
@@ -21,6 +24,35 @@ func TestSameHost(t *testing.T) {
 		got := sameHost(tc.url1, tc.url2)
 		if got != tc.sameHost {
 			t.Fatalf("expected same hosts for %s and %s: %t but got: %t", tc.url1, tc.url2, tc.sameHost, got)
+		}
+	}
+}
+
+func TestExtract(t *testing.T) {
+	testcases := []struct {
+		url          string
+		sameHostOnly bool
+		links        []string
+	}{
+		{
+			"https://example.com",
+			false,
+			[]string{"https://www.iana.org/domains/example"},
+		},
+		{
+			"https://example.com",
+			true,
+			nil,
+		},
+	}
+
+	for _, tc := range testcases {
+		links, err := Extract(tc.url, tc.sameHostOnly)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(links, tc.links) {
+			t.Fatalf("extracting from %s got '%v' but expected '%v'", tc.url, links, tc.links)
 		}
 	}
 }

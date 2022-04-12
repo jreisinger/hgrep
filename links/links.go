@@ -1,4 +1,4 @@
-package main
+package links
 
 import (
 	"fmt"
@@ -8,10 +8,10 @@ import (
 	"golang.org/x/net/html"
 )
 
-// linksExtract makes an HTTP GET request to the specified URL, parses the
-// response as HTML, and returns the links in the HTML document. It ignores bad
-// URLs and URLs on different host.
-func linksExtract(url string) ([]string, error) {
+// Extract makes an HTTP GET request to the specified URL, parses the response
+// as HTML and returns the links in the HTML document. It ignores bad URLs and
+// URLs on different host.
+func Extract(url string, sameHostOnly bool) ([]string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func linksExtract(url string) ([]string, error) {
 					continue
 				}
 				link, err := resp.Request.URL.Parse(a.Val)
-				if err != nil || !sameHost(url, link.String()) {
+				if err != nil || (sameHostOnly && !sameHost(url, link.String())) {
 					// Ignore bad URLs and
 					// URLs on other hosts.
 					continue

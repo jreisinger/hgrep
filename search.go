@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/jreisinger/hgrep/links"
 )
 
 // searchAndPrint searches url for pattern and prints it. If recurse is true it
@@ -17,7 +19,7 @@ func searchAndPrint(url string, pattern *regexp.Regexp, recurse, headers bool) [
 	result.print(headers)
 
 	if recurse {
-		list, err := linksExtract(url)
+		list, err := links.Extract(url, true)
 		if err != nil {
 			log.Print(err)
 		}
