@@ -45,7 +45,7 @@ func Grep(url string, pattern *regexp.Regexp, extractLinks bool) Result {
 	}
 
 	if extractLinks {
-		result.Links, result.Err = links.Extract(url, true) // TODO: use body instead of url
+		result.Links, result.Err = links.Extract(url, true)
 		if result.Err != nil {
 			return result
 		}
