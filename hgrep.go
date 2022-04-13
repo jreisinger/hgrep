@@ -35,7 +35,7 @@ const colorRed = "\033[31m"
 // }
 
 // Grep searches url for pattern.
-func Grep(url string, pattern *regexp.Regexp) Result {
+func Grep(url string, pattern *regexp.Regexp, extractLinks bool) Result {
 	result := Result{URL: url}
 
 	body, err := fetch(url)
@@ -44,9 +44,11 @@ func Grep(url string, pattern *regexp.Regexp) Result {
 		return result
 	}
 
-	result.Links, result.Err = links.Extract(url, true) // TODO: use body instead of url
-	if result.Err != nil {
-		return result
+	if extractLinks {
+		result.Links, result.Err = links.Extract(url, true) // TODO: use body instead of url
+		if result.Err != nil {
+			return result
+		}
 	}
 
 	result.Lines, result.Matches, result.Err = match(body, pattern)

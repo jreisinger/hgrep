@@ -34,7 +34,7 @@ func main() {
 	}
 
 	worklist := make(chan []string)
-	var n int // number of pending sends to worklist
+	var n int // number of pending sends to worklist to know when we're done
 
 	n++
 	go func() {
@@ -54,7 +54,7 @@ func main() {
 				n++
 				go func(link string) {
 					tokens <- struct{}{} // acquire a token
-					result := hgrep.Grep(link, rx)
+					result := hgrep.Grep(link, rx, *r)
 					if result.Err != nil {
 						log.Printf("greping %s: %v", result.URL, result.Err)
 					} else {
