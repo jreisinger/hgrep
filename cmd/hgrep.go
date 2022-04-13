@@ -28,34 +28,45 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var header bool
+	var headers bool
 	if len(urls) > 1 || *r {
-		header = true
+		headers = true
 	}
 
 	worklist := make(chan []string)
 	var n int // number of pending sends to worklist
 
-	// Start with the command-line arguments.
 	n++
-	go func() { worklist <- urls }()
+	go func() {
+		worklist <- urls // start with the command-line arguments
+	}()
 
 	// tokens is a counting semaphore used to
 	// enforce a limit on concurrent requests.
 	var tokens = make(chan struct{}, *c) // struct{} has size zero
 
-	// Crawl the web concurrently.
-	seen := make(map[string]bool)
+	seen := make(map[string]bool) // to dedup links
 	for ; n > 0; n-- {
-		for _, url := range <-worklist {
-			if !seen[url] {
-				seen[url] = true
+		list := <-worklist
+		for _, link := range list {
+			if !seen[link] {
+				seen[link] = true
 				n++
 				go func(link string) {
 					tokens <- struct{}{} // acquire a token
-					worklist <- hgrep.Search(link, rx, *r, header, *m)
+					result := hgrep.Grep(link, rx)
+					if result.Err != nil {
+						log.Printf("greping %s: %v", result.URL, result.Err)
+					} else {
+						result.Print(*m, headers)
+						if *r {
+							worklist <- result.Links
+						} else {
+							worklist <- nil // you need to send something even if it's nothing :-)
+						}
+					}
 					<-tokens // release the token
-				}(url)
+				}(link)
 			}
 		}
 	}

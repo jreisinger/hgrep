@@ -10,8 +10,8 @@ USAGE
 
 ```
 hgrep DevOps https://go.dev https://golang.org
+hgrep -m '\w+\[\.\][a-z]{1,63}' https://blog.google/threat-analysis-group/rss
 hgrep -r DevOps https://go.dev
-hgrep -m '\w+\[\.\][a-z]{1,3}' https://blog.google/threat-analysis-group/rss
 ```
 
 TODO
