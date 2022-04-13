@@ -1,3 +1,4 @@
+// Package links extracts links from an URL.
 package links
 
 import (

@@ -1,3 +1,4 @@
+// Package hgrep (HTTP grep) searches URLs for patterns.
 package hgrep
 
 import (
