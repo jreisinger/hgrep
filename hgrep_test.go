@@ -125,12 +125,25 @@ func TestMatch_matches(t *testing.T) {
 		{
 			[]byte(testHtml2),
 			regexp.MustCompile(`"https://github.com/[^"#]+"`),
-			[]string{"\"https://github.com/kubernetes/kubernetes\"", "\"https://github.com/kubernetes/community/tree/master/contributors/guide\"", "\"https://github.com/cncf/cla\""},
+			[]string{
+				"\"https://github.com/kubernetes/kubernetes\"",
+				"\"https://github.com/kubernetes/community/tree/master/contributors/guide\"",
+				"\"https://github.com/cncf/cla\"",
+			},
 		},
 		{
 			[]byte(testHtml2),
 			regexp.MustCompile(`"(https://github.com/([^"#]+))"`),
-			[]string{"https://github.com/kubernetes/kubernetes", "kubernetes/kubernetes", "https://github.com/kubernetes/community/tree/master/contributors/guide", "kubernetes/community/tree/master/contributors/guide", "https://github.com/cncf/cla", "cncf/cla"},
+			[]string{
+				"https://github.com/kubernetes/kubernetes",
+				"kubernetes/kubernetes",
+
+				"https://github.com/kubernetes/community/tree/master/contributors/guide",
+				"kubernetes/community/tree/master/contributors/guide",
+
+				"https://github.com/cncf/cla",
+				"cncf/cla",
+			},
 		},
 	}
 	for _, test := range tests {
