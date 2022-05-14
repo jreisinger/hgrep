@@ -104,7 +104,11 @@ func match(input []byte, pattern *regexp.Regexp) (lines, matches []string, err e
 		ss := pattern.FindAllStringSubmatch(line, -1)
 		if len(ss) != 0 {
 			for _, s := range ss {
-				matches = append(matches, s...)
+				if pattern.NumSubexp() > 0 {
+					matches = append(matches, s[1:]...)
+				} else {
+					matches = append(matches, s...)
+				}
 			}
 		}
 
