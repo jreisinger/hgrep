@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMatch(t *testing.T) {
-	testcases := []struct {
+func TestMatch_lines(t *testing.T) {
+	tests := []struct {
 		input []byte
 		rx    *regexp.Regexp
 		lines []string
@@ -68,10 +68,10 @@ func TestMatch(t *testing.T) {
 			},
 		},
 	}
-	for _, tc := range testcases {
-		lines, _, err := match(tc.input, tc.rx)
+	for _, test := range tests {
+		lines, _, err := match(test.input, test.rx)
 		assert.NoError(t, err)
-		assert.Equal(t, tc.lines, lines)
+		assert.Equal(t, test.lines, lines)
 	}
 }
 
