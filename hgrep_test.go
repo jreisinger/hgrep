@@ -103,9 +103,9 @@ var testHtml2 = `<ul>
 
 func TestMatch_matches(t *testing.T) {
 	tests := []struct {
-		input []byte
-		rx    *regexp.Regexp
-		want  []string
+		input   []byte
+		rx      *regexp.Regexp
+		matches []string
 	}{
 		{
 			[]byte(testHtml),
@@ -136,6 +136,6 @@ func TestMatch_matches(t *testing.T) {
 	for _, test := range tests {
 		_, matches, err := match(test.input, test.rx)
 		assert.NoError(t, err)
-		assert.Equal(t, test.want, matches)
+		assert.Equal(t, test.matches, matches)
 	}
 }
